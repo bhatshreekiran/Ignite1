@@ -2,12 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 
-type Stage = "email" | "otp" | "error";
+type Stage = "email" | "otp" | "error" | "reveal";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [stage, setStage] = useState<Stage>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -16,7 +14,11 @@ export default function LoginPage() {
   const [success, setSuccess] = useState("");
   const [countdown, setCountdown] = useState(0);
   const [hash, setHash] = useState<string>("");
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -65,6 +67,19 @@ export default function LoginPage() {
     if (d.length) { const n = [...otp]; for (let i = 0; i < d.length; i++) n[i] = d[i]; setOtp(n); otpRefs.current[Math.min(d.length, 5)]?.focus(); }
   };
 
+  const triggerFullscreenVideo = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = false;
+      video.play().catch(() => {});
+      if (video.requestFullscreen) {
+        video.requestFullscreen().catch(() => {});
+      } else if ((video as any).webkitRequestFullscreen) {
+        (video as any).webkitRequestFullscreen();
+      }
+    }
+  };
+
   const handleVerifyOtp = useCallback(async () => {
     const code = otp.join("");
     if (code.length !== 6) { setError("Enter the complete 6-digit OTP."); return; }
@@ -73,24 +88,31 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/verify-otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, otp: code, hash }) });
       const data = await res.json();
-      if (data.success) { setSuccess("Verified!"); setTimeout(() => router.push("/reveal"), 1200); }
+      if (data.success) { 
+        setSuccess("Verified!");
+        setStage("reveal");
+        // Because this is triggered by a click, we can launch fullscreen immediately
+        setTimeout(triggerFullscreenVideo, 100);
+      }
       else { setError(data.error || "Invalid OTP."); setOtp(["","","","","",""]); otpRefs.current[0]?.focus(); }
     } catch { setError("Network error."); } finally { setLoading(false); }
-  }, [otp, email, hash, router]);
+  }, [otp, email, hash]);
 
   useEffect(() => { if (otp.every(d => d !== "") && stage === "otp") handleVerifyOtp(); }, [otp, stage, handleVerifyOtp]);
 
   const cardVariants = { initial: { opacity: 0, y: 30, scale: 0.97 }, animate: { opacity: 1, y: 0, scale: 1 }, exit: { opacity: 0, y: -20, scale: 0.97 } };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
       {/* Back to home */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed top-6 left-6 z-20">
-        <a href="/" className="badge hover:border-[var(--color-accent)]/40 transition-colors">
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-          Back
-        </a>
-      </motion.div>
+      {stage !== "reveal" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed top-6 left-6 z-20">
+          <a href="/" className="badge hover:border-[var(--color-accent)]/40 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+            Back
+          </a>
+        </motion.div>
+      )}
 
       <AnimatePresence mode="wait">
         {/* ===== ACCESS RESTRICTED ===== */}
@@ -115,12 +137,12 @@ export default function LoginPage() {
                 <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] via-[var(--color-accent-secondary)] to-[var(--color-accent-tertiary)] flex items-center justify-center glow-accent relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
                   <svg className="w-7 h-7 text-white relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L7.5 12" />
                   </svg>
                 </div>
               </motion.div>
               <h1 className="text-2xl font-bold gradient-text mb-2" style={{ fontFamily: "var(--font-display)" }}>Enter Your Email</h1>
-              <p className="text-[var(--color-text-muted)] text-sm">Authorized members only</p>
+              <p className="text-[var(--color-text-muted)] text-sm">Access the exclusive reveal</p>
             </div>
 
             <div className="mb-2">
@@ -183,7 +205,54 @@ export default function LoginPage() {
             </div>
           </motion.div>
         )}
+
+        {/* ===== REVEAL CONTENT ===== */}
+        {stage === "reveal" && (
+          <motion.div key="reveal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col items-center justify-center w-full max-w-4xl">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.3 }} className="text-center mb-8">
+              <h1 className="text-4xl md:text-6xl font-extrabold mb-3" style={{ fontFamily: "var(--font-display)" }}><span className="gradient-text-animated text-glow">Ignite AI</span></h1>
+              <p className="text-[var(--color-text-secondary)] text-sm md:text-base tracking-[0.08em] uppercase">The Future is Here</p>
+            </motion.div>
+
+            <div className="video-container glow-accent-strong w-full relative group rounded-2xl overflow-hidden bg-black aspect-video">
+              {!videoLoaded && !videoError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-bg-secondary)]">
+                   <div className="w-10 h-10 border-2 border-[var(--color-accent)]/20 border-t-[var(--color-accent)] rounded-full animate-spin" />
+                </div>
+              )}
+              
+              {videoError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-center p-6">
+                  <p className="text-[var(--color-text-muted)]">Video failed to load. Please refresh.</p>
+                </div>
+              )}
+
+              <video
+                ref={videoRef}
+                className={`w-full h-full object-contain ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoadedData={() => setVideoLoaded(true)}
+                onError={() => setVideoError(true)}
+                controls playsInline muted
+              >
+                <source src="/reveal.mp4" type="video/mp4" />
+              </video>
+            </div>
+            
+            <motion.button 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}
+              onClick={triggerFullscreenVideo}
+              className="mt-8 text-[var(--color-text-muted)] hover:text-white transition-colors text-xs tracking-widest uppercase"
+            >
+              Restart Fullscreen
+            </motion.button>
+          </motion.div>
+        )}
       </AnimatePresence>
+
+      {/* Background Cinematic Video (Preloading) */}
+      <video ref={videoRef} className="hidden" preload="auto" muted playsInline>
+        <source src="/reveal.mp4" type="video/mp4" />
+      </video>
     </div>
   );
 }

@@ -7,13 +7,7 @@ export async function POST(req: Request) {
     const { email } = await req.json();
     if (!email) return NextResponse.json({ success: false, error: "Email is required." }, { status: 400 });
 
-    const allowedEmails = [process.env.ALLOWED_EMAIL_1, process.env.ALLOWED_EMAIL_2]
-      .filter(Boolean)
-      .map(e => e?.toLowerCase().trim());
 
-    if (!allowedEmails.includes(email.toLowerCase().trim())) {
-      return NextResponse.json({ success: false, error: "Email is not authorized." }, { status: 403 });
-    }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

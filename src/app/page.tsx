@@ -5,12 +5,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function HomePage() {
-  const [qrCode, setQrCode] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    fetch("/api/qr").then(r => r.json()).then(d => { if (d.success) setQrCode(d.qrCode); }).catch(() => {});
   }, []);
 
   if (!mounted) return null;
@@ -48,7 +46,7 @@ export default function HomePage() {
             {/* Inner shimmer */}
             <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-accent)]/5 to-transparent" />
             <svg className="w-14 h-14 text-[var(--color-accent-light)] relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455-2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455-2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
             </svg>
           </div>
         </div>
@@ -59,64 +57,33 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.4 }}
-        className="text-center mb-14"
+        className="text-center mb-12"
       >
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4" style={{ fontFamily: "var(--font-display)" }}>
           <span className="gradient-text-animated text-glow">Ignite AI</span>
         </h1>
         <p className="text-[var(--color-text-secondary)] text-base md:text-lg font-medium tracking-[0.08em] uppercase">
-          Department of AI &amp; Data Science
+          Department of AI & Data Science
         </p>
         <div className="mt-5 line-glow w-32 mx-auto" />
       </motion.div>
 
-      {/* QR Card */}
+      {/* Simple Button Action */}
       <motion.div
-        initial={{ opacity: 0, y: 35 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.6 }}
-        className="glass-card p-8 md:p-10 text-center max-w-sm w-full"
+        transition={{ duration: 0.8, delay: 0.6 }}
+        className="w-full max-w-xs"
       >
-        <p className="text-[var(--color-text-muted)] text-[0.65rem] uppercase tracking-[0.25em] mb-6 font-semibold">
-          Scan to Access
-        </p>
-
-        {/* QR code */}
-        <div className="relative inline-block mb-8">
-          <div className="absolute inset-[-14px] rounded-2xl border border-[var(--color-accent)]/15 pulse-ring" />
-          <div className="absolute inset-[-28px] rounded-3xl border border-[var(--color-accent-secondary)]/8 pulse-ring" style={{ animationDelay: "1.2s" }} />
-
-          {qrCode ? (
-            <motion.img
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              src={qrCode}
-              alt="QR Code"
-              className="w-52 h-52 rounded-xl"
-              id="qr-code-image"
-            />
-          ) : (
-            <div className="w-52 h-52 rounded-xl bg-[var(--color-bg-secondary)] shimmer flex items-center justify-center">
-              <span className="text-[var(--color-text-muted)] text-xs tracking-widest">LOADING</span>
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[var(--color-border)]" />
-          <span className="text-[var(--color-text-muted)] text-[0.6rem] uppercase tracking-[0.3em] font-medium">or</span>
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[var(--color-border)]" />
-        </div>
-
-        {/* CTA */}
         <Link href="/login" id="login-link">
-          <button className="btn-primary w-full text-sm tracking-wider flex items-center justify-center gap-2" id="access-btn">
-            Enter Access Portal
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <button className="btn-primary w-full text-base tracking-widest py-4 flex items-center justify-center gap-3 group" id="access-btn">
+            Enter Reveal Portal
+            <motion.svg 
+              className="w-5 h-5 transition-transform group-hover:translate-x-1" 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
+            </motion.svg>
           </button>
         </Link>
       </motion.div>
@@ -125,8 +92,8 @@ export default function HomePage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1 }}
-        className="mt-12 text-center"
+        transition={{ duration: 0.6, delay: 0.9 }}
+        className="mt-16 text-center"
       >
         <p className="text-[var(--color-text-muted)] text-[0.6rem] tracking-[0.35em] uppercase font-medium">
           Authorized Personnel Only

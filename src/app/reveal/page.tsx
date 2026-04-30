@@ -111,7 +111,7 @@ export default function RevealPage() {
               controls playsInline muted
               id="reveal-video"
             >
-              <source src="/reveal-video.mp4 (1).mp4" type="video/mp4" />
+              <source src="/reveal.mp4" type="video/mp4" />
             </video>
           </motion.div>
 
